@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>문제 풀이 노트</title>
+<title>하트체크리스트</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
@@ -36,7 +36,7 @@
   .app {
     width: min(1100px, 100%); height: min(760px, calc(100dvh - 48px)); background: var(--main);
     border-radius: 12px; overflow: hidden; display: grid; grid-template-columns: 300px 1fr;
-    box-shadow: var(--shadow); border: 1px solid rgba(0, 0, 0, .1);
+    box-shadow: var(--shadow); border: 1px solid rgba(0, 0, 0, .1); position: relative;
   }
   .app.collapsed { grid-template-columns: 0 1fr; }
 
@@ -88,15 +88,21 @@
   .prop input[type=text], .prop input[type=date] { border: 0; border-radius: 8px; background: var(--field); padding: 6px 10px; font-size: 15px; }
   .prop input[type=text] { flex: 1; min-width: 150px; }
   .chip { border: 0; border-radius: 999px; background: var(--field); padding: 5px 12px; font-size: 13px; cursor: pointer; }
+  .chip.add-color { background: var(--thbg); border: 1px dashed var(--gray); color: var(--gray); }
+  .chip.add-color:hover { border-color: var(--ink); color: var(--ink); }
   .help:empty { display: none; }
   .help { margin: 6px 0 0; font-size: 12px; color: var(--gray); }
   .help.warn { color: #e5484d; }
-  .opts { display: flex; gap: 8px; flex-wrap: wrap; }
-  .shape { width: 44px; height: 44px; padding: 3px; border-radius: 10px; border: 2px solid transparent; background: var(--field); cursor: pointer; }
-  .shape[aria-pressed="true"] { border-color: var(--accent); }
-  .shape svg, .q svg { display: block; width: 100%; height: 100%; }
-  .sw { width: 30px; height: 30px; border-radius: 50%; padding: 0; cursor: pointer; border: 3px solid var(--main); box-shadow: 0 0 0 1.5px var(--line); }
-  .sw[aria-pressed="true"] { box-shadow: 0 0 0 2.5px var(--ink); }
+  .opts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  [hidden] { display: none !important; }
+  .sw { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 4px; border: 2px solid transparent; border-radius: 999px; background: var(--field); cursor: pointer; }
+  .sw .dot { width: 20px; height: 20px; border-radius: 50%; flex: none; }
+  .sw .t { font-size: 13px; padding-right: 8px; }
+  .sw[aria-pressed="true"] { border-color: var(--ink); }
+  .prop .lc { display: inline-flex; align-items: center; gap: 6px; background: var(--field); border-radius: 999px; padding: 3px 10px 3px 4px; max-width: 160px; }
+  .lc i { width: 20px; height: 20px; border-radius: 50%; flex: none; }
+  .prop .lc input[type=text] { flex: 1; min-width: 50px; width: 100%; padding: 0; background: transparent; font-size: 13px; }
+  
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 8px 6px; }
   .q { width: 100%; aspect-ratio: 1; padding: 2px; border: 0; border-radius: 12px; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .empty { grid-column: 1 / -1; color: var(--gray); padding: 14px 0; }
@@ -110,19 +116,49 @@
   .memo::placeholder { color: var(--gray); opacity: .7; }
   .memo:focus-visible { outline: 0; }
 
-  /* 효과 */
-  .pen { position: fixed; width: 30px; height: 30px; pointer-events: none; z-index: 40; filter: drop-shadow(1px 3px 2px rgba(60, 30, 50, .3)); }
-  #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
-  .banner {
-    position: fixed; left: 50%; top: 22%; z-index: 60; pointer-events: none; max-width: 90vw; text-align: center;
-    background: var(--main); color: var(--ink); border: 3px solid var(--accent); border-radius: 22px;
-    padding: 12px 24px; font-size: clamp(22px, 5vw, 30px); font-weight: 700; box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
-    opacity: 0; transform: translate(-50%, 0) scale(.7); transition: opacity .3s, transform .4s cubic-bezier(.3, 1.6, .5, 1);
+  /* 오른쪽 패널: 시험 D-day, 스톱워치 */
+  .panel {
+    position: absolute; top: 0; right: 0; bottom: 0; width: min(320px, 100%); z-index: 20;
+    background: var(--side); border-left: 1px solid var(--line); box-shadow: -8px 0 30px rgba(0, 0, 0, .15);
+    display: flex; flex-direction: column; gap: 14px; padding: 14px 16px 24px; overflow-y: auto;
+    transform: translateX(100%); visibility: hidden; transition: transform .25s, visibility .25s;
   }
-  .banner.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
-  .q.cheer { animation: hop .6s ease-in-out both; }
-  @keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-12px) rotate(-6deg); } 70% { transform: translateY(0) rotate(4deg); } }
-  @media (prefers-reduced-motion: reduce) { .q.cheer { animation: none; } .banner { transition: opacity .2s; } }
+  .app.show-panel .panel { transform: none; visibility: visible; }
+  .ptop { display: flex; align-items: center; gap: 6px; }
+  .tg[aria-pressed="true"] { background: var(--accent); color: #1d1d1f; }
+  .tg[aria-pressed="false"] { opacity: .55; }
+  
+  .pcard { background: var(--main); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .dday-header { display: flex; justify-content: space-between; align-items: center; }
+  .ptitle { font-size: 13px; font-weight: 600; color: var(--gray); }
+  .dday { margin-top: 4px; font-size: 46px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .exam-at { margin-top: 2px; font-size: 13px; color: var(--gray); }
+  
+  .dday-edit { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--line); padding-top: 12px; }
+  .dday-edit input { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 13px; background: var(--field); }
+  .dday-btns { display: flex; gap: 6px; justify-content: flex-end; }
+
+  .swtime { margin-top: 8px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .swtime span { font-size: 36px; font-weight: 600; letter-spacing: -0.02em; }
+  .swtime small { font-size: 20px; color: var(--gray); }
+  .swbtns { display: flex; gap: 8px; margin-top: 12px; }
+  .swbtns button { flex: 1; border: 0; border-radius: 999px; padding: 9px 0; font-size: 14px; font-weight: 600; cursor: pointer; background: var(--field); }
+  .swbtns #swGo { background: var(--accent); color: #1d1d1f; }
+  .swbtns button:disabled { opacity: .4; cursor: default; }
+  .laps { list-style: none; margin: 10px 0 0; padding: 0; max-height: 170px; overflow-y: auto; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .laps li { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .laps li span { color: var(--gray); }
+  .laps li b { text-align: right; font-size: 15px; }
+  .laps i { grid-column: 1 / -1; text-align: right; font-style: normal; font-size: 12px; color: var(--gray); }
+  @media (min-width: 1100px) {
+    .app { width: min(1240px, 100%); grid-template-columns: 300px 1fr 280px; }
+    .app.collapsed { grid-template-columns: 0 1fr 280px; }
+    .panel { position: static; transform: none; visibility: visible; box-shadow: none; width: auto; }
+    .panelbtn, .pclose { display: none; }
+  }
+
+  /* 색연필 효과 */
+  .pen { position: fixed; width: 30px; height: 30px; pointer-events: none; z-index: 40; filter: drop-shadow(1px 3px 2px rgba(60, 30, 50, .3)); }
   .toast {
     position: fixed; left: 50%; bottom: 28px; z-index: 70; transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
     display: flex; align-items: center; gap: 14px; background: #2c2c2e; color: #fff; border-radius: 999px; padding: 10px 14px 10px 20px; font-size: 14px;
@@ -164,8 +200,6 @@
     </filter>
   </defs>
 </svg>
-<canvas id="fx" aria-hidden="true"></canvas>
-<div class="banner" id="cheer" role="status"></div>
 <div class="toast" id="toast" role="status"></div>
 
 <div class="app" id="app">
@@ -188,6 +222,9 @@
       <button class="ib" id="del" type="button" aria-label="노트 삭제" title="삭제">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
       </button>
+      <button class="ib panelbtn" id="pb" type="button" aria-label="시험 D-day·스톱워치" title="시험 D-day·스톱워치">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 3h6"/></svg>
+      </button>
       <button class="ib" id="add" type="button" aria-label="새 노트" title="새 노트">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5H7a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-5"/><path d="M18.5 3.5a2 2 0 0 1 3 3L12 16l-4 1 1-4z"/></svg>
       </button>
@@ -204,11 +241,16 @@
             <input type="date" id="date">
             <button class="chip" id="today" type="button">오늘</button>
           </div>
-          <div class="prop">
+          <div class="prop" id="rangeRow">
             <label for="range">문제 번호</label>
             <input type="text" id="range" autocomplete="off" placeholder="1-10, 15-20">
           </div>
-          <div class="prop"><span class="lab">색</span><div class="opts" id="colors" role="group" aria-label="칠할 색"></div></div>
+          <div class="prop">
+            <span class="lab">색</span>
+            <div class="opts" id="colors" role="group" aria-label="칠할 색"></div>
+            <button class="chip add-color" id="addColor" type="button">+ 추가</button>
+            <button class="chip" id="lbEdit" type="button">라벨 편집</button>
+          </div>
         </div>
         <p class="help" id="help"></p>
 
@@ -223,20 +265,68 @@
       </div>
     </div>
   </section>
+
+  <aside class="panel" aria-label="시험 D-day와 스톱워치">
+    <div class="ptop">
+      <button class="chip tg" id="tgDday" type="button" aria-pressed="true">D-day</button>
+      <button class="chip tg" id="tgSw" type="button" aria-pressed="true">스톱워치</button>
+      <span class="sp"></span>
+      <button class="chip pclose" id="pc" type="button">닫기</button>
+    </div>
+
+    <section class="pcard" id="ddayCard" aria-label="디데이">
+      <div class="dday-header">
+        <div class="ptitle" id="cdLabel">목표 설정</div>
+        <button class="chip" id="btnEditDday" type="button" style="padding:2px 8px; font-size:12px;">설정</button>
+      </div>
+      <div class="dday" id="ddayN">D-0</div>
+      <div class="exam-at" id="examAt"></div>
+      
+      <div class="dday-edit" id="ddayEdit" hidden>
+        <input type="text" id="inDdayName" placeholder="시험/목표 이름 (예: 임용시험)" maxlength="15">
+        <input type="date" id="inDdayDate">
+        <div class="dday-btns">
+          <button class="chip" id="btnCancelDday" type="button">취소</button>
+          <button class="chip" id="btnSaveDday" type="button" style="background:var(--accent);color:#1d1d1f;font-weight:600;">저장</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="pcard" id="swCard" aria-label="스톱워치">
+      <div class="ptitle">스톱워치</div>
+      <div class="swtime"><span id="swMain">00:00:00</span><small id="swCs">.00</small></div>
+      <div class="swbtns">
+        <button type="button" id="swReset">초기화</button>
+        <button type="button" id="swLap">랩</button>
+        <button type="button" id="swGo">시작</button>
+      </div>
+      <ul class="laps" id="swLaps"></ul>
+    </section>
+  </aside>
 </div>
 
 <script>
 (function () {
-  var COLORS = [
-    { name: "분홍", fill: "#ffadc6", stroke: "#e0678d" },
+  var FULL_COLORS = [
+    { name: "빨강", fill: "#ff9d9d", stroke: "#e5484d" },
     { name: "주황", fill: "#ffc98a", stroke: "#e39a3b" },
     { name: "노랑", fill: "#ffe27a", stroke: "#d8b022" },
-    { name: "연두", fill: "#b5e48c", stroke: "#6fae3e" },
-    { name: "하늘", fill: "#9bd7ff", stroke: "#4a9fd8" },
+    { name: "초록", fill: "#b5e48c", stroke: "#6fae3e" },
+    { name: "파랑", fill: "#9bd7ff", stroke: "#4a9fd8" },
     { name: "보라", fill: "#c9b6ff", stroke: "#8c6fe0" }
   ];
-  var KEY = "tracker:v2", OLD_KEY = "tracker:v1";
+  
+  var KEY = "tracker:v2";
   var INK = "#4a3b2f", EMPTY_FILL = "#ffffff", EMPTY_STROKE = "#a39d95";
+
+  // 색상 팔레트 상태 관리
+  var paletteSize = 3;
+  try {
+    var savedSize = localStorage.getItem("tracker:colors");
+    if (savedSize) paletteSize = Math.max(3, Math.min(FULL_COLORS.length, parseInt(savedSize, 10)));
+  } catch(e) {}
+  
+  function getActiveColors() { return FULL_COLORS.slice(0, paletteSize); }
 
   // ---- 노트 데이터 ----
   function todayStr() {
@@ -245,23 +335,21 @@
   }
   function uid() { return "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function blank(from) {
-    return { id: uid(), title: "", date: todayStr(), range: "1-10", memo: "",
-      shape: from ? from.shape : "circle", color: from ? from.color : 0, done: {}, updated: Date.now() };
+    return { id: uid(), title: "", date: todayStr(), range: "", memo: "", 
+      labels: from ? JSON.parse(JSON.stringify(from.labels || {})) : {}, 
+      color: from ? from.color : 0, done: {}, updated: Date.now() };
   }
+  
   var data = { notes: [], active: null };
   try {
     var sv = JSON.parse(localStorage.getItem(KEY) || "null");
     if (sv && Array.isArray(sv.notes)) { data = sv; }
-    else {
-      var o = JSON.parse(localStorage.getItem(OLD_KEY) || "null");   // 이전 버전의 노트 1장 가져오기
-      if (o && typeof o === "object") {
-        var m = blank();
-        ["title", "date", "range", "shape", "color", "done"].forEach(function (k) { if (o[k] !== undefined) m[k] = o[k]; });
-        data.notes = [m];
-      }
-    }
   } catch (e) {}
-  if (!data.notes.length) data.notes = [blank()];
+  
+  if (!data.notes || !data.notes.length) data.notes = [blank()];
+  data.notes.forEach(function (n) {
+    n.labels = n.labels || {}; n.done = n.done || {}; n.memo = n.memo || "";
+  });
   if (!data.notes.some(function (n) { return n.id === data.active; })) data.active = data.notes[0].id;
 
   function cur() { return data.notes.filter(function (n) { return n.id === data.active; })[0]; }
@@ -275,54 +363,18 @@
   }
 
   // ---- 도형 SVG ----
-  function petals(n, r, d, cx, cy) {
-    var out = [];
-    for (var i = 0; i < n; i++) {
-      var a = -Math.PI / 2 + i * 2 * Math.PI / n;
-      out.push([cx + d * Math.cos(a), cy + d * Math.sin(a), r]);
-    }
-    return out;
-  }
-  function circlesStr(cs, a) {
-    return cs.map(function (c) {
-      return '<circle cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="' + c[2] + '" ' + a + '/>';
-    }).join("");
-  }
-  var HEART_D = "M50 89C37 79 9 60 7 37C5 19 21 8 35 11C43 13 48 19 51 25C54 17 62 8 73 9C88 10 96 25 92 40C87 61 63 78 50 89Z";
-  // 연필로 한 번 더 쓱 그은 듯한 덧선
-  function sketch(stroke) {
-    return '<path d="M52 87C40 78 13 60 10 39C9 22 22 12 34 14" fill="none" stroke="' + stroke + '" stroke-width="1.8" stroke-linecap="round" opacity=".6"/>' +
-           '<path d="M49 26C52 17 61 11 72 12C85 13 93 25 90 38C86 58 64 75 54 86" fill="none" stroke="' + stroke + '" stroke-width="1.8" stroke-linecap="round" opacity=".6"/>';
-  }
-  var GEOM = {
-    circle: function (a) { return '<circle cx="50" cy="50" r="43" ' + a + '/>'; },
-    square: function (a) { return '<rect x="8" y="8" width="84" height="84" rx="20" ' + a + '/>'; },
-    heart: function (a) { return '<path d="' + HEART_D + '" ' + a + '/>'; },
-    star: function (a) { return '<polygon points="50,5 63,36 96,38 70,59 79,92 50,74 21,92 30,59 4,38 37,36" ' + a + '/>'; },
-    flower: function (a) { return circlesStr(petals(6, 19, 28, 50, 50).concat([[50, 50, 22]]), a); },
-    cloud: function (a) { return circlesStr([[28, 62, 18], [50, 42, 23], [73, 60, 19], [50, 66, 20]], a); }
-  };
-  var COMPOUND = { flower: 1, cloud: 1 };
-  var TEXT_Y = { heart: 46, star: 55 };
-
-  function textSVG(shape, label) {
+  var HEART_D = "M50 90C20 68 6 50 6 33C6 18 18 8 31 8C40 8 47 13 50 20C53 13 60 8 69 8C82 8 94 18 94 33C94 50 80 68 50 90Z";
+  function textSVG(label) {
     if (label === "") return "";
     var fs = String(label).length <= 2 ? 36 : 28, rot = ((label * 37) % 9) - 4;
-    return '<text x="50" y="' + (TEXT_Y[shape] || 52) + '" text-anchor="middle" dominant-baseline="central" font-size="' + fs +
+    return '<text x="50" y="46" text-anchor="middle" dominant-baseline="central" font-size="' + fs +
       '" fill="' + INK + '" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke" transform="rotate(' + rot +
       ' 50 50)" font-family="Jua, \'Gamja Flower\', \'Apple SD Gothic Neo\', sans-serif">' + label + '</text>';
   }
 
-  // 단색(빈칸, 선택 미리보기용)
-  function shapeSVG(shape, label, fill, stroke) {
-    var body;
-    if (COMPOUND[shape]) {
-      body = GEOM[shape]('fill="' + stroke + '" stroke="' + stroke + '" stroke-width="7" stroke-linejoin="round"') +
-             GEOM[shape]('fill="' + fill + '"');
-    } else {
-      body = GEOM[shape]('fill="' + fill + '" stroke="' + stroke + '" stroke-width="3.2" stroke-linejoin="round"') + sketch(stroke);
-    }
-    return '<svg viewBox="0 0 100 100" aria-hidden="true">' + body + textSVG(shape, label) + '</svg>';
+  function shapeSVG(label, fill, stroke) {
+    var body = '<path d="' + HEART_D + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="4" stroke-linejoin="round"/>';
+    return '<svg viewBox="0 0 100 100" aria-hidden="true">' + body + textSVG(label) + '</svg>';
   }
 
   // ---- 색연필 ----
@@ -334,10 +386,8 @@
     });
     return "#" + ("000000" + out.toString(16)).slice(-6);
   }
-  function rnd(seed) {
-    return function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-  }
-  // 손으로 쓱쓱 칠한 듯한 지그재그 선(한 줄로 이어진 경로)
+  function rnd(seed) { return function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }; }
+  
   function hatchPath(seed) {
     var r = rnd(seed * 7 + 3), pts = [], i = 0;
     for (var k = -96; k <= 96; k += 6, i++) {
@@ -349,45 +399,37 @@
     }
     return "M" + pts.map(function (p) { return p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" L");
   }
-  // 색연필로 칠한 칸 (질감 필터 + 클립)
-  function pencilSVG(shape, label, col, id) {
+
+  function pencilSVG(label, col, id) {
     var pencil = mix(col.fill, col.stroke, 0.3);
-    var lineAttr = 'fill="none" stroke="' + col.stroke + '" stroke-width="3.2" stroke-linejoin="round"';
-    var base, top = "";
-    if (COMPOUND[shape]) {
-      base = '<g filter="url(#pcLine)">' +
-             GEOM[shape]('fill="' + col.stroke + '" stroke="' + col.stroke + '" stroke-width="6" stroke-linejoin="round"') + '</g>' +
-             GEOM[shape]('fill="' + EMPTY_FILL + '"');
-    } else {
-      base = GEOM[shape]('fill="' + EMPTY_FILL + '"');
-      top = '<g filter="url(#pcLine)">' + GEOM[shape](lineAttr) + sketch(col.stroke) + '</g>';
-    }
+    var lineAttr = 'fill="none" stroke="' + col.stroke + '" stroke-width="3.5" stroke-linejoin="round"';
+    var base = '<path d="' + HEART_D + '" fill="' + EMPTY_FILL + '"/>';
+    var top = '<g filter="url(#pcLine)"><path d="' + HEART_D + '" ' + lineAttr + '/></g>';
+    
     return '<svg viewBox="0 0 100 100" aria-hidden="true">' +
-      '<defs><clipPath id="cp' + id + '">' + GEOM[shape]("") + '</clipPath></defs>' + base +
+      '<defs><clipPath id="cp' + id + '"><path d="' + HEART_D + '"/></clipPath></defs>' + base +
       '<g clip-path="url(#cp' + id + ')"><g filter="url(#pcFill)">' +
       '<path class="hatch" d="' + hatchPath(id) + '" fill="none" stroke="' + pencil +
       '" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/></g></g>' +
-      top + textSVG(shape, label) + '</svg>';
+      top + textSVG(label) + '</svg>';
   }
 
-  function reduceMotion() {
-    return !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
-  }
+  function reduceMotion() { return !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches); }
   function penSVG(color) {
     return '<svg viewBox="0 0 30 30" width="30" height="30"><g stroke="#5a4636" stroke-width="1.2" stroke-linejoin="round">' +
       '<polygon points="7,18 12,23 2,28" fill="#f2d3a8"/><polygon points="2,28 4.4,23.2 6.8,25.6" fill="' + color + '"/>' +
       '<polygon points="7,18 22,3 27,8 12,23" fill="' + color + '"/><polygon points="22,3 25,0 30,5 27,8" fill="#f4a6b8"/></g></svg>';
   }
-  // 연필이 지그재그로 칠해 나가는 과정을 보여 줌
-  function animateFill(btn, col, done) {
+  
+  function animateFill(btn, col) {
     var path = btn && btn.querySelector(".hatch"), svg = btn && btn.querySelector("svg");
-    if (!path || reduceMotion()) { if (done) done(); return; }
+    if (!path || reduceMotion()) return;
     var L = path.getTotalLength();
     path.style.strokeDasharray = L; path.style.strokeDashoffset = L;
     var pen = document.createElement("div");
     pen.className = "pen"; pen.innerHTML = penSVG(mix(col.fill, col.stroke, 0.3));
     document.body.appendChild(pen);
-    var D = 1200, t0 = performance.now();
+    var D = 500, t0 = performance.now();
     function step(now) {
       if (!path.isConnected) { pen.remove(); return; }
       var t = Math.min(1, (now - t0) / D), len = L * t;
@@ -398,10 +440,7 @@
       pen.style.top = (r.top + pt.y / 100 * r.height - 28) + "px";
       pen.style.transform = "rotate(" + wig + "deg)";
       if (t < 1) requestAnimationFrame(step);
-      else {
-        pen.remove(); path.style.strokeDasharray = ""; path.style.strokeDashoffset = "";
-        if (done) done();
-      }
+      else { pen.remove(); path.style.strokeDasharray = ""; path.style.strokeDashoffset = ""; }
     }
     requestAnimationFrame(step);
   }
@@ -424,23 +463,28 @@
     return { nums: nums, bad: bad, capped: capped };
   }
 
-  // ---- 화면 ----
+  // ---- 화면 구성 ----
   var $ = function (id) { return document.getElementById(id); };
   var appEl = $("app"), gridEl = $("grid"), helpEl = $("help"), countEl = $("count");
   function isMobile() { return window.matchMedia("(max-width: 760px)").matches; }
 
-  // 사이드바 썸네일: 칠한 상태를 작은 칸으로 보여 줌
+  var editLabels = false;
+  function isOn(ci) { return ci !== undefined && ci !== null && !!FULL_COLORS[ci]; }
+  
+  function cellsOf(nt) {
+    return parseRange(nt.range).nums.map(function (n) { return nt.done[n]; });
+  }
+
   function thumbSVG(nt) {
-    var nums = parseRange(nt.range).nums.slice(0, 49), n = nums.length;
+    var cells = cellsOf(nt).slice(0, 49), n = cells.length;
     if (!n) return '<svg viewBox="0 0 54 54" aria-hidden="true"></svg>';
     var cols = Math.min(7, Math.ceil(Math.sqrt(n))), rows = Math.ceil(n / cols);
     var cell = 44 / Math.max(cols, rows), sc = cell * 0.86 / 100;
     var ox = (54 - cell * cols) / 2, oy = (54 - cell * rows) / 2, out = "";
-    nums.forEach(function (num, i) {
-      var ci = nt.done[num], filled = ci !== undefined && COLORS[ci];
+    cells.forEach(function (ci, i) {
       var x = ox + (i % cols) * cell + cell * 0.07, y = oy + Math.floor(i / cols) * cell + cell * 0.07;
       out += '<path transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') scale(' + sc.toFixed(4) + ')" d="' + HEART_D + '"' +
-        (filled ? ' fill="' + COLORS[ci].fill + '"' : ' class="e"') + '/>';
+        (isOn(ci) ? ' fill="' + FULL_COLORS[ci].fill + '"' : ' class="e"') + '/>';
     });
     return '<svg viewBox="0 0 54 54" aria-hidden="true">' + out + '</svg>';
   }
@@ -448,19 +492,19 @@
   function renderList() {
     var q = $("q").value.trim().toLowerCase();
     var list = data.notes.slice().sort(function (a, b) { return b.updated - a.updated; }).filter(function (n) {
-      return !q || (n.title || "").toLowerCase().indexOf(q) > -1 || (n.memo || "").toLowerCase().indexOf(q) > -1 || (n.date || "").indexOf(q) > -1 || fmtDate(n.date).indexOf(q) > -1;
+      return !q || (n.title || "").toLowerCase().indexOf(q) > -1 || (n.memo || "").toLowerCase().indexOf(q) > -1 ||
+        (n.date || "").indexOf(q) > -1 || fmtDate(n.date).indexOf(q) > -1;
     });
     var box = $("list"); box.innerHTML = "";
     if (!list.length) { var e = document.createElement("p"); e.className = "none"; e.textContent = "검색 결과가 없어요."; box.appendChild(e); }
     list.forEach(function (nt) {
-      var r = parseRange(nt.range).nums;
-      var done = r.filter(function (x) { return nt.done[x] !== undefined; }).length;
+      var cells = cellsOf(nt), done = cells.filter(isOn).length;
       var b = document.createElement("button");
       b.type = "button"; b.className = "item" + (nt.id === data.active ? " on" : "");
       b.setAttribute("aria-current", nt.id === data.active ? "true" : "false");
       b.innerHTML = '<span class="th">' + thumbSVG(nt) + '</span><span class="tx"><b></b><small></small></span>';
       b.querySelector("b").textContent = nt.title || "새 노트";
-      b.querySelector("small").textContent = fmtDate(nt.date) + " · " + done + "/" + r.length;
+      b.querySelector("small").textContent = fmtDate(nt.date) + " · " + done + "/" + cells.length;
       b.addEventListener("click", function () { selectNote(nt.id); });
       box.appendChild(b);
     });
@@ -468,14 +512,34 @@
   }
 
   function renderPickers() {
-    var nt = cur();
-    $("colors").innerHTML = "";
-    COLORS.forEach(function (c, i) {
-      var b = document.createElement("button");
-      b.type = "button"; b.className = "sw"; b.style.background = c.fill; b.setAttribute("aria-label", c.name);
-      b.setAttribute("aria-pressed", nt.color === i ? "true" : "false");
-      b.addEventListener("click", function () { nt.color = i; touch(); renderPickers(); });
-      $("colors").appendChild(b);
+    var nt = cur(), box = $("colors");
+    box.innerHTML = "";
+    $("lbEdit").textContent = editLabels ? "완료" : "라벨 편집";
+    
+    var activeColors = getActiveColors();
+    $("addColor").style.display = (paletteSize < FULL_COLORS.length && !editLabels) ? "inline-block" : "none";
+
+    activeColors.forEach(function (c, i) {
+      var lab = (nt.labels[i] || "").trim(), el;
+      if (editLabels) {
+        el = document.createElement("label"); el.className = "lc";
+        el.innerHTML = '<i></i><input type="text" maxlength="12" placeholder="라벨 없음">';
+        el.firstChild.style.background = c.fill;
+        var inp = el.querySelector("input");
+        inp.value = nt.labels[i] || ""; inp.setAttribute("aria-label", c.name + " 라벨");
+        inp.addEventListener("input", function () {
+          nt.labels[i] = inp.value; touch();
+        });
+      } else {
+        el = document.createElement("button");
+        el.type = "button"; el.className = "sw"; el.setAttribute("aria-label", c.name + (lab ? " · " + lab : ""));
+        el.setAttribute("aria-pressed", nt.color === i ? "true" : "false");
+        el.innerHTML = '<span class="dot"></span>' + (lab ? '<span class="t"></span>' : "");
+        el.firstChild.style.background = c.fill;
+        if (lab) el.lastChild.textContent = lab;
+        el.addEventListener("click", function () { nt.color = i; touch(); renderPickers(); });
+      }
+      box.appendChild(el);
     });
   }
 
@@ -488,21 +552,22 @@
 
     if (!r.nums.length) {
       gridEl.innerHTML = '<p class="empty">문제 번호를 입력하면 여기에 빈칸이 생겨요.</p>';
-      countEl.textContent = ""; last = { total: 0, done: 0 };
+      countEl.textContent = ""; 
       return;
     }
     var doneCount = 0, html = "";
     r.nums.forEach(function (n) {
-      var ci = nt.done[n], filled = ci !== undefined && COLORS[ci];
+      var ci = nt.done[n], filled = isOn(ci);
       if (filled) doneCount++;
       html += '<button type="button" class="q" data-n="' + n + '" aria-pressed="' + (filled ? "true" : "false") +
         '" aria-label="' + n + '번 ' + (filled ? "칠함" : "안 칠함") + '">' +
-        (filled ? pencilSVG("heart", n, COLORS[ci], n) : shapeSVG("heart", n, EMPTY_FILL, EMPTY_STROKE)) + '</button>';
+        (filled ? pencilSVG(n, FULL_COLORS[ci], n) : shapeSVG(n, EMPTY_FILL, EMPTY_STROKE)) + '</button>';
     });
     gridEl.innerHTML = html;
     countEl.textContent = doneCount + "/" + r.nums.length;
-    last = { total: r.nums.length, done: doneCount };
   }
+
+  function renderView() { renderGrid(); }
 
   function autosize() {
     var m = $("memo");
@@ -513,98 +578,48 @@
     $("title").value = nt.title; $("date").value = nt.date; $("range").value = nt.range;
     $("memo").value = nt.memo || ""; autosize();
     $("stamp").textContent = stampText(nt.updated);
-    renderPickers(); renderGrid();
+    renderPickers(); renderView();
   }
   function selectNote(id) {
     data.active = id; persist(); loadEditor(); renderList();
     appEl.classList.add("show-editor"); autosize();
   }
 
-  // ---- 축하 효과 ----
-  var last = { total: 0, done: 0 };
-  var fx = $("fx"), bannerEl = $("cheer"), bannerTimer = null, rafId = null;
-
-  function celebrate() {
-    bannerEl.textContent = "모두 칠했어요! 수고했어요 🎉";
-    bannerEl.classList.add("show");
-    clearTimeout(bannerTimer);
-    bannerTimer = setTimeout(function () { bannerEl.classList.remove("show"); }, 3200);
-
-    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    Array.prototype.forEach.call(gridEl.querySelectorAll(".q"), function (q, i) {
-      q.style.animationDelay = Math.min(i * 25, 700) + "ms";
-      q.classList.add("cheer");
-    });
-
-    var dpr = window.devicePixelRatio || 1, W = window.innerWidth, H = window.innerHeight;
-    fx.width = W * dpr; fx.height = H * dpr;
-    var c = fx.getContext("2d");
-    c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var parts = [], i;
-    for (i = 0; i < 120; i++) {
-      var left = i % 2 === 0, col = COLORS[i % COLORS.length];
-      var ang = (left ? -1 : -1) * (Math.PI / 2) + (Math.random() - 0.5) * 0.9 + (left ? 0.45 : -0.45);
-      var sp = 11 + Math.random() * 9;
-      parts.push({
-        x: left ? 0 : W, y: H,
-        vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
-        rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.4,
-        size: 8 + Math.random() * 8, fill: col.fill, stroke: col.stroke, type: i % 3
-      });
-    }
-    var t0 = performance.now();
-    cancelAnimationFrame(rafId);
-    function frame(now) {
-      var life = now - t0;
-      c.clearRect(0, 0, W, H);
-      parts.forEach(function (p) {
-        p.vy += 0.28; p.vx *= 0.99; p.vy *= 0.99;
-        p.x += p.vx; p.y += p.vy; p.rot += p.vr;
-        c.save();
-        c.translate(p.x, p.y); c.rotate(p.rot);
-        c.globalAlpha = Math.max(0, Math.min(1, (3600 - life) / 900));
-        c.fillStyle = p.fill; c.strokeStyle = p.stroke; c.lineWidth = 2;
-        if (p.type === 0) { c.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2); }
-        else if (p.type === 1) { c.beginPath(); c.arc(0, 0, p.size / 2.2, 0, 6.28); c.fill(); }
-        else {
-          c.beginPath();
-          for (var k = 0; k < 10; k++) {
-            var rr = k % 2 ? p.size * 0.25 : p.size * 0.6, a = -Math.PI / 2 + k * Math.PI / 5;
-            c[k ? "lineTo" : "moveTo"](Math.cos(a) * rr, Math.sin(a) * rr);
-          }
-          c.closePath(); c.fill(); c.stroke();
-        }
-        c.restore();
-      });
-      if (life < 3600) rafId = requestAnimationFrame(frame);
-      else c.clearRect(0, 0, W, H);
-    }
-    rafId = requestAnimationFrame(frame);
-  }
-
   gridEl.addEventListener("click", function (e) {
     var b = e.target.closest(".q");
     if (!b) return;
     var nt = cur(), n = b.getAttribute("data-n");
-    var wasComplete = last.total > 0 && last.done === last.total;
     if (nt.done[n] === nt.color) delete nt.done[n]; else nt.done[n] = nt.color;
     touch(); renderGrid(); renderList();
-    var complete = !wasComplete && last.total > 0 && last.done === last.total;
     if (nt.done[n] !== undefined) {
-      animateFill(gridEl.querySelector('[data-n="' + n + '"]'), COLORS[nt.done[n]], complete ? celebrate : null);
+      animateFill(gridEl.querySelector('[data-n="' + n + '"]'), FULL_COLORS[nt.done[n]]);
     }
   });
 
-  // ---- 입력 ----
+  // ---- 입력 이벤트 ----
   $("title").addEventListener("input", function () { cur().title = this.value; touch(); renderList(); });
   $("range").addEventListener("input", function () { cur().range = this.value; cur().done = {}; touch(); renderGrid(); renderList(); });
   $("date").addEventListener("change", function () { cur().date = this.value || todayStr(); touch(); renderList(); });
   $("today").addEventListener("click", function () { cur().date = todayStr(); $("date").value = cur().date; touch(); renderList(); });
-  $("clear").addEventListener("click", function () { cur().done = {}; touch(); renderGrid(); renderList(); });
+  $("clear").addEventListener("click", function () { cur().done = {}; touch(); renderView(); renderList(); });
+  
+  $("lbEdit").addEventListener("click", function () { editLabels = !editLabels; renderPickers(); });
+  $("addColor").addEventListener("click", function () {
+    if (paletteSize < FULL_COLORS.length) {
+      paletteSize++;
+      try { localStorage.setItem("tracker:colors", paletteSize); } catch(e) {}
+      renderPickers();
+    }
+  });
+
   $("memo").addEventListener("input", function () { cur().memo = this.value; autosize(); touch(); renderList(); });
   window.addEventListener("resize", autosize);
-  $("q").addEventListener("input", renderList);
+  
+  var searchTimeout;
+  $("q").addEventListener("input", function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(renderList, 250);
+  });
 
   // ---- 노트 관리 ----
   var toastEl = $("toast"), toastTimer = null;
@@ -650,6 +665,114 @@
   $("sb").addEventListener("click", function () {
     if (isMobile()) appEl.classList.remove("show-editor"); else appEl.classList.toggle("collapsed");
   });
+
+  // ---- 커스텀 D-day ----
+  var DDAY_KEY = "tracker:dday_cfg";
+  var ddayCfg = { name: "임용시험", date: "2026-11-28" };
+  try {
+    var dj = JSON.parse(localStorage.getItem(DDAY_KEY) || "null");
+    if (dj && dj.name && dj.date) ddayCfg = dj;
+  } catch (e) {}
+
+  function dayNum(str) { var p = str.split("-"); return Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000; }
+  function seoulToday() { return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" }); }
+  
+  var lastD = null;
+  function updateDdayUI() {
+    var examDate = new Date(ddayCfg.date + "T00:00:00+09:00");
+    $("examAt").textContent = examDate.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
+    
+    var n = Math.round(dayNum(ddayCfg.date) - dayNum(seoulToday()));
+    if (n === lastD) return;
+    lastD = n;
+    $("ddayN").textContent = n > 0 ? "D-" + n : (n === 0 ? "D-DAY" : "D+" + (-n));
+    $("cdLabel").textContent = n < 0 ? (ddayCfg.name + " 종료") : ddayCfg.name;
+  }
+  
+  $("btnEditDday").addEventListener("click", function() {
+    $("inDdayName").value = ddayCfg.name;
+    $("inDdayDate").value = ddayCfg.date;
+    $("ddayEdit").hidden = false;
+  });
+  $("btnCancelDday").addEventListener("click", function() { $("ddayEdit").hidden = true; });
+  $("btnSaveDday").addEventListener("click", function() {
+    var n = $("inDdayName").value.trim();
+    var d = $("inDdayDate").value;
+    if (!n || !d) { alert("이름과 날짜를 모두 입력해주세요."); return; }
+    ddayCfg = { name: n, date: d };
+    try { localStorage.setItem(DDAY_KEY, JSON.stringify(ddayCfg)); } catch (e) {}
+    lastD = null; 
+    updateDdayUI();
+    $("ddayEdit").hidden = true;
+  });
+
+  updateDdayUI(); setInterval(updateDdayUI, 1000 * 60 * 60);
+
+  // 패널 UI 상태 저장
+  var UI_KEY = "tracker:ui", ui = { dday: true, sw: true };
+  try {
+    var uj = JSON.parse(localStorage.getItem(UI_KEY) || "null");
+    if (uj) { ui.dday = uj.dday !== false; ui.sw = uj.sw !== false; }
+  } catch (e) {}
+  function applyUI() {
+    $("ddayCard").hidden = !ui.dday; $("swCard").hidden = !ui.sw;
+    $("tgDday").setAttribute("aria-pressed", ui.dday ? "true" : "false");
+    $("tgSw").setAttribute("aria-pressed", ui.sw ? "true" : "false");
+    try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (e) {}
+  }
+  $("tgDday").addEventListener("click", function () { ui.dday = !ui.dday; applyUI(); });
+  $("tgSw").addEventListener("click", function () { ui.sw = !ui.sw; applyUI(); });
+  applyUI();
+
+  // ---- 스톱워치 ----
+  var SW_KEY = "tracker:sw", sw = { acc: 0, start: null, laps: [] }, swTimer = null;
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  try {
+    var sj = JSON.parse(localStorage.getItem(SW_KEY) || "null");
+    if (sj && typeof sj === "object") { sw.acc = +sj.acc || 0; sw.start = sj.start || null; sw.laps = Array.isArray(sj.laps) ? sj.laps : []; }
+  } catch (e) {}
+  function swSave() { try { localStorage.setItem(SW_KEY, JSON.stringify(sw)); } catch (e) {} }
+  function swElapsed() { return sw.acc + (sw.start ? Date.now() - sw.start : 0); }
+  function swFmt(ms) {
+    var s = Math.floor(ms / 1000);
+    return pad(Math.floor(s / 3600)) + ":" + pad(Math.floor((s % 3600) / 60)) + ":" + pad(s % 60) + "." + pad(Math.floor(ms / 10) % 100);
+  }
+  function swPaint() {
+    var t = swFmt(swElapsed()).split(".");
+    $("swMain").textContent = t[0]; $("swCs").textContent = "." + t[1];
+  }
+  function swKo(ms) {
+    var t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = t % 60;
+    return (h ? h + "시간 " : "") + (h || m ? m + "분 " : "") + sec + "초";
+  }
+  function swLaps() {
+    var ul = $("swLaps"); ul.innerHTML = "";
+    for (var i = sw.laps.length - 1; i >= 0; i--) {
+      var li = document.createElement("li");
+      li.innerHTML = "<span></span><b></b><i></i>";
+      li.children[0].textContent = "랩 " + (i + 1);
+      li.children[1].textContent = swKo(sw.laps[i] - (i ? sw.laps[i - 1] : 0));
+      li.children[2].textContent = "누적 " + swKo(sw.laps[i]);
+      ul.appendChild(li);
+    }
+  }
+  function swUI() {
+    $("swGo").textContent = sw.start ? "일시정지" : (sw.acc ? "계속" : "시작");
+    $("swLap").disabled = !sw.start;
+    $("swReset").disabled = !sw.start && !sw.acc && !sw.laps.length;
+    if (sw.start && !swTimer) swTimer = setInterval(swPaint, 50);
+    if (!sw.start && swTimer) { clearInterval(swTimer); swTimer = null; }
+    swPaint();
+  }
+  $("swGo").addEventListener("click", function () {
+    if (sw.start) { sw.acc = swElapsed(); sw.start = null; } else { sw.start = Date.now(); }
+    swSave(); swUI();
+  });
+  $("swLap").addEventListener("click", function () { sw.laps.push(swElapsed()); swSave(); swLaps(); });
+  $("swReset").addEventListener("click", function () { sw = { acc: 0, start: null, laps: [] }; swSave(); swLaps(); swUI(); });
+  $("pb").addEventListener("click", function () { appEl.classList.toggle("show-panel"); });
+  $("pc").addEventListener("click", function () { appEl.classList.remove("show-panel"); });
+  swLaps(); swUI();
 
   appEl.classList.add("show-editor");
   loadEditor(); renderList();
